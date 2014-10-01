@@ -6,6 +6,6 @@ A new plugin for using <a href="http://datatables.net/">DataTables</a> (js libra
 Requirements
 ============
 PHP >= 5.3<br>
-<a href="https://github.com/mbrostami/zf2Plugin">Zf2Plugin</a>
+<a href="https://github.com/mbrostami/zf2Plugin">Zf2Plugin</a><br>
 <a href="https://github.com/zendframework/ZendDeveloperTools">ZendDeveloperTools</a> (optional)
  
