@@ -1,0 +1,165 @@
+<?php 
+if (! $this->templateObject) { ?>
+	<div class="alert alert-danger">Data table plugin doesn't not load in this route.<br>
+	Add and edit these lines to module config  : 
+	<pre>
+'autoload-plugins' => array(
+   'data-table' => array(
+    	'data-table\index\index' => array(
+    		'patterns' => array( 
+    			"e.g : /^myModule-[a-z-]+/i",
+    		),
+	    	'routes' => array(
+	    		'Or resource name e.g : module-controller-index'
+	    	)
+   		)
+    )
+),
+	</pre>
+	</div>	
+<?php 
+} else { 
+	$columns = array();
+	if (isset($this->templateObject->columns)) {
+		$checkboxes = false;
+		$options = $this->templateObject->getOptions(); 
+		$informationLink = false;
+		$hasOrder = false;
+		if ($options) {
+			foreach ($options as $configName => $configValue) {
+				if ($configName == 'information' And $configName) {
+					$informationLink = true;
+				}
+				if ($configName == 'checkbox' And $configName) {
+					$checkboxes = true;
+				}
+				if ($configName == 'order' And $configName) {
+					$hasOrder = true;
+				} 
+			}
+		}
+		if ($this->templateObject->columns) {
+			if ($checkboxes) {
+				$columns[] = array(
+					"data" => "<input type='checkbox' id='data-table-checkall'>", 
+					"bSortable" => false,
+// 					"sDefaultContent" => "<input type='checkbox' class='data-table-checkboxes' name='data-table-check[]'>"
+				);
+			}
+			foreach ($this->templateObject->columns as $column) {
+				unset($column['field']);
+				$columns[] = $column;
+			}  
+			$this->templateObject->setColumns($columns);
+		}  
+		
+		$options = $this->templateObject->getOptions(); 
+		if (! $hasOrder && $checkboxes) {
+			$options['order'] = array(array(1, 'desc'));
+		}
+
+		?> 
+		<table id="<?php echo $this->elementId;?>" class="display" cellspacing="0" width="100%">
+		        <thead>
+		            <tr> 
+		                <?php  
+		                if (isset($this->templateObject->columns)) {
+							foreach ($this->templateObject->columns as $columnInfo) {
+								echo "<th>$columnInfo[data]</th>";
+							}
+						}	
+		                ?>
+		            </tr>
+		        </thead>
+		  
+		</table> 
+		<script type="text/javascript"> 
+		      $(document).ready(function() {
+		        var table = $('#<?php echo $this->elementId;?>').DataTable({ 
+		        <?php 
+		        if ($options) {
+					foreach ($options as $configName => $configValue) {
+
+						echo '"'.$configName.'":'.json_encode($configValue, JSON_UNESCAPED_SLASHES).",";
+					}
+				}	 
+				$ajaxUrl = $this->url('plugins-datatable', array(
+						'controller' => 'index',
+						'action' => 'ajax'
+					)
+				);	
+		        ?>  
+	            "ajax": {
+	                "url": "<?php echo $ajaxUrl;?>",
+	                "type": "POST",
+	                "data": function ( d ) { 
+	                    d.className = "<?php echo $this->templateObject->identity;?>" 
+	                }
+	            }, 
+		        }); 
+        
+		<?php 
+			  if ($checkboxes) { ?>
+			  $('body').on('click', '#data-table-checkall', function() { 
+				  	$('.data-table-checkboxes').prop('checked', this.checked); 
+			  });
+			  <?php }
+			  if ($informationLink) { ?>
+				function format ( d ) { 
+				    var data = $.parseJSON(d['data-table-content']); 
+				    var html = "";
+				    var head = ""; 
+				    var body = ""; 
+				    var multipleRow = false;
+				    $.each(data, function(name, value) { 
+					    if (typeof value == 'object') {
+					    	multipleRow = true;
+						    if (html == "") { 
+								head = '<tr>';
+							    	$.each(value, function(label, val) { 
+							    		head += '<th>'+label+'</th>';
+							    	});
+								head += '</tr>';
+								html = head;
+						    }
+					    	html += '<tr>';
+					    	$.each(value, function(label, val) { 
+						    	html += '<td>'+val+'</td>';
+					    	});
+					    	html += '</tr>';
+					    } else {   
+						    head += '<th>'+name+'</th>'; 
+						    body += '<td>'+value+'</td>';
+					    }
+				    });
+				    if (! multipleRow) {
+				    	html += "<tr>"+head+"</tr>";
+				    	html += "<tr>"+body+"</tr>";
+				    }
+				    return '<table cellpadding="5" class="table table-bordered data-table-details" cellspacing="0" border="0" style="padding-left:50px;">'+
+				    		html +
+				    '</table>';
+				}
+			  $('.data-table-info-content').hide();
+				$('body').on('click', '.data-table-information .btn', function() { 
+		            var tr = $(this).closest('tr');
+		            var row = table.row( tr );
+		     
+		            if ( row.child.isShown() ) { 
+		                row.child.hide();
+		                tr.removeClass('shown');
+		            }
+		            else { 
+		                row.child( format(row.data()) ).show();
+		                tr.addClass('shown');
+		            }
+				});	
+			  <?php }
+		?>
+			    });
+		</script>
+	<?php 
+
+	}
+}
+?>

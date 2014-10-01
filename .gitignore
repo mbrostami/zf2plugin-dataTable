@@ -1,6 +1,9 @@
 # Composer files
 composer.phar
 vendor/
+.settings
+.buildpath
+.project
 
 # Local configs
 config/autoload/*.local.php
